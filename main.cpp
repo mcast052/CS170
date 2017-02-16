@@ -17,6 +17,7 @@ CS170 WINTER17, Project 1:
 #include <sstream>
 #include <functional> 
 #include <algorithm> 
+#include <stdlib.h> 
 
 using namespace std; 
 
@@ -24,13 +25,73 @@ class Node {
 	public: 
 	Node* parent; 
 	int f_n; 
+	int g_n; 
+	int h_n; 
+	int heuristic; 
 	vector< vector<int> > curr_state; 
 	pair<int, int> curr_blank_index; 
 	
 	//Constructor 
-	Node(Node* p, int cost, vector< vector<int> > c_state, pair<int, int> c_b_i) 
-		: parent(p), f_n(cost), curr_state(c_state), curr_blank_index(c_b_i) 
-	{ }; 
+	Node(Node* p, int cost, vector< vector<int> > c_state, pair<int, int> c_b_i, int h) 
+		: parent(p), g_n(cost), curr_state(c_state), curr_blank_index(c_b_i), heuristic(h) 
+	{ 
+		calcFn(); 
+	}; 
+	
+	void calcFn() { 
+		if(heuristic == 1) { h_n = 0; }
+		else if(heuristic == 2) { 
+			h_n = 0; 
+			int numToCheck = 1; 
+			for(unsigned int x = 0; x < 3; x++) {
+				for(unsigned int y = 0; y < 3; y++) { 
+					if(numToCheck == 9 && curr_state.at(x).at(y) != 0) { h_n++; } 
+					else if(numToCheck < 9 && curr_state.at(x).at(y) != numToCheck) { h_n++; }
+					numToCheck++; 
+				}
+			} 
+		} 
+		else if(heuristic == 3) {
+			//TO-D0: Finish manhattan heuristic 
+			h_n = 0; 
+			int numToCheck = 1;
+			
+			//Special case for the blank
+			//h_n += abs(curr_blank_index.first - 2) + abs(curr_blank_index.second - 2); 
+			
+			for(unsigned x = 0; x < 3; x++) { 
+				for(unsigned y = 0; y < 3; y++) {
+					
+					int currNum = curr_state.at(x).at(y);
+					int tmp = 0; 
+					//cout << currNum << endl; 
+					
+					
+					if(currNum != numToCheck) { 
+						cout << "Coordinate: " << x << ", " << y << endl; 
+						if(currNum == 1) { tmp = abs(x) + abs(y); } 
+						else if(currNum == 2) { tmp = abs(x) + abs( (int)(1 - y) ); } 
+						else if(currNum == 3) { tmp = abs(x) + abs( (int)(2 - y) ); } 
+						else if(currNum == 4) { tmp = abs( (int)(1 - x) ) + abs(y); }
+						else if(currNum == 5) { tmp = abs( (int)(1 - x) ) + abs( (int)(1 - y) ); }
+						else if(currNum == 6) { tmp = abs( (int)(1 - x) ) + abs( (int)(2 - y) ); }
+						else if(currNum == 7) { tmp = abs( (int)(2 - x ) ) + abs(y); }
+						else if(currNum == 8) { tmp = abs( (int)(2 - x) ) + abs( (int)(1 - y) ); }
+						else if(currNum == 0) { tmp = abs( (int)(2 - x) ) + abs( (int)(2 - y) ); }
+						else { tmp = 0; } 
+						cout << "currNum: " << currNum << endl; 
+						cout << "Distance: " << tmp << endl; 
+						h_n += tmp;
+					} 
+					numToCheck++; 
+				} 
+			} 
+			
+		}
+		f_n = g_n + h_n; 
+		cout << "f_n = " << f_n << endl << "g_n = " << g_n << endl << "h_n = " << h_n << endl; 
+		return; 
+	} 
 	
 	vector<Node*> createChildren() { 
 		vector<Node*> children;
@@ -43,7 +104,7 @@ class Node {
 			int x = curr_blank_index.first + 1; 
 			int y = curr_blank_index.second;
 			pair<int, int> index(x, y); 
-			child = new Node(this, f_n + 1, operationAction(x, y), index); 
+			child = new Node(this, g_n + 1, operationAction(x, y), index, heuristic); 
 			
 			children.push_back(child); 
 		} 
@@ -52,7 +113,7 @@ class Node {
 			int x = curr_blank_index.first - 1; 
 			int y = curr_blank_index.second;
 			pair<int, int> index(x, y); 
-			child = new Node(this, f_n + 1, operationAction(x, y), index); 
+			child = new Node(this, g_n + 1, operationAction(x, y), index, heuristic); 
 			
 			children.push_back(child);
 		}
@@ -61,7 +122,7 @@ class Node {
 			int x = curr_blank_index.first; 
 			int y = curr_blank_index.second + 1;
 			pair<int, int> index(x, y); 
-			child = new Node(this, f_n + 1, operationAction(x, y), index); 
+			child = new Node(this, g_n + 1, operationAction(x, y), index, heuristic); 
 			
 			 
 			children.push_back(child);
@@ -71,7 +132,7 @@ class Node {
 			int x = curr_blank_index.first; 
 			int y = curr_blank_index.second - 1;
 			pair<int, int> index(x, y); 
-			child = new Node(this, f_n + 1, operationAction(x, y), index); 
+			child = new Node(this, g_n + 1, operationAction(x, y), index, heuristic); 
 			
 			children.push_back(child);
 		}
@@ -100,19 +161,7 @@ class Node {
 		
 		return new_state;
 	}
-	
-	/*bool operator==(const Node* b) { 
-		for(unsigned int x = 0; x < 2; x++) { 
-			for(unsigned int y = 0; y < 2; y++) {
-				if(this.curr_blank_index.first != b.curr_blank_index.first || this.curr_blank_index.second != b.curr_blank_index.second) { 
-					//Matrices not equal
-					return false; 
-				} 
-			}
-		}
-		
-		return true; 		
-	} */
+
 	
 	bool goalTest(const vector< vector<int> > goal) { 
 		for(unsigned int x = 0; x < 3; x++) { 
@@ -136,17 +185,11 @@ class Problem {
 									        {7, 8, 0} };
 	pair<int, int> blank_index;
 	int heuristic; 
-	int h_n; 
 	
 	Problem(vector< vector <int> > init_state, int heuristicFunc, pair<int, int> index) 
 		: initial_state(init_state), heuristic(heuristicFunc), blank_index(index)
 	{ } 
-	
-	void calculateHn() { 
-		if(heuristic == 1) { h_n = 0; } 
-		else if(heuristic == 2) { h_n = 1; } 
-		else if(heuristic == 3) { h_n = 2; }
-	}
+
 }; 
 
 //Comparator for priority queue
@@ -161,7 +204,7 @@ void GRAPH_SEARCH(Problem prob) {
 	priority_queue<Node*, vector<Node*>, Compare> frontier;  
 	vector<Node*> explored;
 	
-	Node* init = new Node(NULL, 0, prob.initial_state, prob.blank_index); 
+	Node* init = new Node(NULL, 0, prob.initial_state, prob.blank_index, prob.heuristic); 
 	frontier.push(init); //frontier has only initial state
 	
 	long maxFrontierSize = frontier.size(); 
