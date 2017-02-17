@@ -22,7 +22,6 @@ CS170 WINTER17, Project 1:
 
 using namespace std; 
 
-//Comparator for priority queue
 class Node {
 	public: 
 	Node* parent; 
@@ -30,12 +29,13 @@ class Node {
 	int g_n; 
 	int h_n; 
 	int heuristic; 
+	string key; 
 	vector< vector<int> > curr_state; 
 	pair<int, int> curr_blank_index; 
 	
 	//Constructor 
-	Node(Node* p, int cost, vector< vector<int> > c_state, pair<int, int> c_b_i, int h) 
-		: parent(p), g_n(cost), curr_state(c_state), curr_blank_index(c_b_i), heuristic(h) 
+	Node(Node* p, int cost, vector< vector<int> > c_state, pair<int, int> c_b_i, int h, string k) 
+		: parent(p), g_n(cost), curr_state(c_state), curr_blank_index(c_b_i), heuristic(h), key(k) 
 	{ 
 		calcFn(); 
 	}; 
@@ -60,8 +60,7 @@ class Node {
 				for(unsigned y = 0; y < 3; y++) {
 					
 					int currNum = curr_state.at(x).at(y);
-					int tmp = 0; 
-					//cout << currNum << endl; 
+					int tmp = 0;  
 					
 					
 					if(currNum != numToCheck) { 
@@ -96,14 +95,10 @@ class Node {
 		
 		return new_state;
 	}
-
-	
-	bool goalTest(const vector< vector<int> > goal) { 
-		return this->curr_state == goal; 
-	} 
 }; 
 
-struct Compare : public std::binary_function<Node*, Node*, bool> { 
+//Comparator for the priority queue
+struct Compare { 
 	bool operator() (const Node* a, const Node* b) const { 
 		return a->f_n > b->f_n; 
 	} 
@@ -124,19 +119,30 @@ class Problem {
 
 }; 
 
+//Generates keys for the unordered map, changing 2D vectors into a string
+string keyGen(vector< vector<int> > v) { 
+	string key; 
+	
+	for(unsigned int x = 0; x < 3; x++) { 
+		for(unsigned int y = 0; y < 3; y++) { 
+			key += to_string(v.at(x).at(y)); 
+		} 
+	} 
+	return key; 
+} 
 
 void GRAPH_SEARCH(Problem prob) { 
 	priority_queue<Node*, vector<Node*>, Compare> frontier;  
-	vector<Node*> explored;
-	vector<Node*> frontierCheck; 
+
+	unordered_map<string, bool> explored; 
 	
-	Node* init = new Node(NULL, 0, prob.initial_state, prob.blank_index, prob.heuristic); 
+	string key = keyGen(prob.initial_state); 
+	Node* init = new Node(NULL, 0, prob.initial_state, prob.blank_index, prob.heuristic, key); 
 	frontier.push(init); //frontier has only initial state
-	frontierCheck.push_back(init); 
-	//cout << "INIT STATE: " << prob.initial_state.to_string() << endl; 
 	
+	
+	explored.insert(make_pair(key, false)); 
 	long maxFrontierSize = frontier.size(); 
-	long maxExploredSize = explored.size(); 
 	
 	while(!frontier.empty()) {
 		
@@ -151,8 +157,7 @@ void GRAPH_SEARCH(Problem prob) {
 		}
 		cout << endl;
 		
-		if(tmp->g_n > 31) {cout << "PAST DEPTH 31" << endl; return;}
-		if(tmp->goalTest(prob.goal_state)) { 
+		if(tmp->curr_state == prob.goal_state) { 
 			cout << "GOAL!!" << endl; 
 			cout << "To solve this problem the search algorithm expanded a total of " << explored.size() << " nodes." << endl; 
 			cout << "The maximum number of nodes in the queue at any one time was " << maxFrontierSize << endl; 
@@ -160,13 +165,7 @@ void GRAPH_SEARCH(Problem prob) {
 			return; 
 		} 
 		
-		explored.push_back(tmp); 
-		
-		/*vector<Node*> children = tmp->createChildren(frontierCheck, explored); 
-		for(unsigned int i = 0; i < children.size(); i++) { 
-			frontier.push(children.at(i));
-			frontierCheck.push_back(children.at(i)); 
-		}*/
+		explored.at(tmp->key) = true; 
 		
 		const int x = tmp->curr_blank_index.first; 
 		const int y = tmp->curr_blank_index.second; 
@@ -174,28 +173,18 @@ void GRAPH_SEARCH(Problem prob) {
 		vector< vector<int> > tmpState; 
 		bool check = true; 
 		
-		
 		if(x < 2) { //down
 			pair<int, int> index(x + 1, y);
 			tmpState = tmp->operationAction(x + 1, y); 
+			string key = keyGen(tmpState); 
 
-			for(unsigned int i = 0; i < frontierCheck.size(); i++) { 
-				if(frontierCheck.at(i)->curr_state == tmpState) { check = false; break; } 
-			} 
-			for(unsigned int j = 0; j < explored.size(); j++) {	
-				if(explored.at(j)->curr_state == tmpState) {check = false; break; } 
-			}
+			if(explored.find(key) != explored.end()) { check = false; } 
+
 			if(check) { 
-				child = new Node(tmp, tmp->g_n + 1, tmpState, index, tmp->heuristic); 
-				//cout << "f_n = " << child->f_n << endl; 
+				child = new Node(tmp, tmp->g_n + 1, tmpState, index, tmp->heuristic, key);
+				
+				explored.insert(make_pair(key, false));  
 				frontier.push(child);
-				frontierCheck.push_back(child); 
-				/*for(unsigned int x = 0; x < 3; x++) { 
-					for(unsigned int y = 0; y <3; y++) { 
-						cout << child->curr_state.at(x).at(y) << " ";
-					} 
-					cout << endl; 
-				}*/
 			}
 				
 		} 
@@ -204,25 +193,16 @@ void GRAPH_SEARCH(Problem prob) {
 		if(x > 0) { //up
 			pair<int, int> index(x - 1, y); 
 			tmpState = tmp->operationAction(x - 1, y); 
+			string key = keyGen(tmpState); 
 			
-			for(unsigned int i = 0; i < frontierCheck.size(); i++) { 
-				if(frontierCheck.at(i)->curr_state == tmpState) { check = false; break; } 
-			} 
-			for(unsigned int j = 0; j < explored.size(); j++) {	
-				if(explored.at(j)->curr_state == tmpState) {check = false; break; } 
-			}
-			if(check) { 
-				//cout << "f_n = " << child->f_n << endl; 
-				child = new Node(tmp, tmp->g_n + 1, tmpState, index, tmp->heuristic); 
+			if(explored.find(key) != explored.end()) {check = false;} 
 			
+			if(check) {  
+				child = new Node(tmp, tmp->g_n + 1, tmpState, index, tmp->heuristic, key); 
+			
+				explored.insert(make_pair(key, false)); 
 				frontier.push(child); 
-				frontierCheck.push_back(child); 
-				/*for(unsigned int x = 0; x < 3; x++) { 
-					for(unsigned int y = 0; y <3; y++) { 
-						cout << child->curr_state.at(x).at(y) << " ";
-					} 
-					cout << endl; 
-				}*/
+				
 			}
 		}
 		
@@ -230,25 +210,14 @@ void GRAPH_SEARCH(Problem prob) {
 		if(y < 2) { //right
 			pair<int, int> index(x, y + 1); 
 			tmpState = tmp->operationAction(x, y + 1); 
+			string key = keyGen(tmpState); 
 
-			for(unsigned int i = 0; i < frontierCheck.size(); i++) { 
-				if(frontierCheck.at(i)->curr_state == tmpState) { check = false; break; } 
-			} 
-			for(unsigned int j = 0; j < explored.size(); j++) {	
-				if(explored.at(j)->curr_state == tmpState) {check = false; break; } 
-			}
+			if(explored.find(key) != explored.end()) { check = false; } 
+			
 			if(check) { 
-				child = new Node(tmp, tmp->g_n + 1, tmpState, index, tmp->heuristic); 
-
-				frontier.push(child); 
-				frontierCheck.push_back(child); 
-				/*cout << "f_n = " << child->f_n << endl; 
-				for(unsigned int x = 0; x < 3; x++) { 
-					for(unsigned int y = 0; y <3; y++) { 
-						cout << child->curr_state.at(x).at(y) << " ";
-					} 
-					cout << endl; 
-				}*/
+				child = new Node(tmp, tmp->g_n + 1, tmpState, index, tmp->heuristic, key); 
+				explored.insert(make_pair(key, false)); 
+				frontier.push(child);
 			}
 		}
 		
@@ -256,30 +225,18 @@ void GRAPH_SEARCH(Problem prob) {
 		if(y > 0) { //left 
 			pair<int, int> index(x, y - 1); 
 			tmpState = tmp->operationAction(x, y - 1); 
+			string key = keyGen(tmpState); 
 			
-			for(unsigned int i = 0; i < frontierCheck.size(); i++) { 
-				if(frontierCheck.at(i)->curr_state == tmpState) { check = false; break; } 
-			} 
-			for(unsigned int j = 0; j < explored.size(); j++) {	
-				if(explored.at(j)->curr_state == tmpState) {check = false; break; } 
-			}
+			if(explored.find(key) != explored.end()) { check = false; } 
+			
 			if(check) { 
-				child = new Node(tmp, tmp->g_n + 1, tmpState, index, tmp->heuristic); 
+				child = new Node(tmp, tmp->g_n + 1, tmpState, index, tmp->heuristic, key); 
+				explored.insert(make_pair(key, false)); 
 				frontier.push(child); 
-				frontierCheck.push_back(child); 
-				/*cout << "f_n = " << child->f_n << endl;
-				for(unsigned int x = 0; x < 3; x++) { 
-					for(unsigned int y = 0; y <3; y++) { 
-						cout << child->curr_state.at(x).at(y) << " ";
-					} 
-					cout << endl; 
-				}*/
 			}
 		}
 		
-		
 		maxFrontierSize = max(maxFrontierSize, (long)frontier.size()); 
-		maxExploredSize = max(maxExploredSize, (long)explored.size()); 
 	}
 
 	cout << "Failed to find solution" << endl; 
