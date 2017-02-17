@@ -179,9 +179,14 @@ void GRAPH_SEARCH(Problem prob) {
 		}
 		cout << endl;
 		
-		if(tmp->curr_state == prob.goal_state) { 
+		if(tmp->curr_state == prob.goal_state) {
+			int exploredSize = 0; 
+			for(auto it = explored.begin(); it != explored.end(); it++) { 
+				if(it->second == true) { exploredSize++; }
+			} 
+	
 			cout << "GOAL!!" << endl; 
-			cout << "To solve this problem the search algorithm expanded a total of " << explored.size() << " nodes." << endl; 
+			cout << "To solve this problem the search algorithm expanded a total of " << exploredSize << " nodes." << endl; 
 			cout << "The maximum number of nodes in the queue at any one time was " << maxFrontierSize << endl; 
 			cout << "The depth of the goal node was " << tmp->g_n << endl << endl << endl; 
 			
