@@ -17,10 +17,11 @@ CS170 WINTER17, Project 1:
 #include <sstream>
 #include <functional> 
 #include <algorithm> 
-#include <stdlib.h> 
+#include <cmath> 
 
 using namespace std; 
 
+//Comparator for priority queue
 class Node {
 	public: 
 	Node* parent; 
@@ -45,19 +46,14 @@ class Node {
 			int numToCheck = 1; 
 			for(unsigned int x = 0; x < 3; x++) {
 				for(unsigned int y = 0; y < 3; y++) { 
-					if(numToCheck == 9 && curr_state.at(x).at(y) != 0) { h_n++; } 
-					else if(numToCheck < 9 && curr_state.at(x).at(y) != numToCheck) { h_n++; }
+					if(numToCheck < 9 && curr_state.at(x).at(y) != numToCheck) { h_n++; }
 					numToCheck++; 
 				}
 			} 
 		} 
 		else if(heuristic == 3) {
-			//TO-D0: Finish manhattan heuristic 
 			h_n = 0; 
 			int numToCheck = 1;
-			
-			//Special case for the blank
-			//h_n += abs(curr_blank_index.first - 2) + abs(curr_blank_index.second - 2); 
 			
 			for(unsigned x = 0; x < 3; x++) { 
 				for(unsigned y = 0; y < 3; y++) {
@@ -69,15 +65,14 @@ class Node {
 					
 					if(currNum != numToCheck) { 
 						cout << "Coordinate: " << x << ", " << y << endl; 
-						if(currNum == 1) { tmp = abs(x) + abs(y); } 
-						else if(currNum == 2) { tmp = abs(x) + abs( (int)(1 - y) ); } 
-						else if(currNum == 3) { tmp = abs(x) + abs( (int)(2 - y) ); } 
-						else if(currNum == 4) { tmp = abs( (int)(1 - x) ) + abs(y); }
+						if(currNum == 1) { tmp = x + y; } 
+						else if(currNum == 2) { tmp = x + abs( (int)(1 - y) ); } 
+						else if(currNum == 3) { tmp = x + abs( (int)(2 - y) ); } 
+						else if(currNum == 4) { tmp = abs( (int)(1 - x) ) + y; }
 						else if(currNum == 5) { tmp = abs( (int)(1 - x) ) + abs( (int)(1 - y) ); }
 						else if(currNum == 6) { tmp = abs( (int)(1 - x) ) + abs( (int)(2 - y) ); }
-						else if(currNum == 7) { tmp = abs( (int)(2 - x ) ) + abs(y); }
+						else if(currNum == 7) { tmp = abs( (int)(2 - x ) ) + y; }
 						else if(currNum == 8) { tmp = abs( (int)(2 - x) ) + abs( (int)(1 - y) ); }
-						else if(currNum == 0) { tmp = abs( (int)(2 - x) ) + abs( (int)(2 - y) ); }
 						else { tmp = 0; } 
 						cout << "currNum: " << currNum << endl; 
 						cout << "Distance: " << tmp << endl; 
@@ -89,54 +84,123 @@ class Node {
 			
 		}
 		f_n = g_n + h_n; 
-		cout << "f_n = " << f_n << endl << "g_n = " << g_n << endl << "h_n = " << h_n << endl; 
 		return; 
 	} 
 	
-	vector<Node*> createChildren() { 
+	vector<Node*> createChildren(vector<Node*> f, vector<Node*> e) { 
 		vector<Node*> children;
 		
 		//Check which operators are possible to do
 		int x = this->curr_blank_index.first; 
 		int y = this->curr_blank_index.second; 
 		Node* child; 
+		bool check = true; 
+		
+		
 		if(x < 2) { //down
 			int x = curr_blank_index.first + 1; 
 			int y = curr_blank_index.second;
 			pair<int, int> index(x, y); 
 			child = new Node(this, g_n + 1, operationAction(x, y), index, heuristic); 
 			
-			children.push_back(child); 
+			for(unsigned int i = 0; i < f.size(); i++) { 
+				if(f.at(i)->curr_state == child->curr_state) { check = false; break; } 
+			} 
+			for(unsigned int j = 0; j < e.size(); j++) {	
+				if(e.at(j)->curr_state == child->curr_state) {check = false; break; } 
+			}
+			if(check) { 
+				cout << "f_n = " << child->f_n << endl; 
+				children.push_back(child); 
+				for(unsigned int x = 0; x < 3; x++) { 
+					for(unsigned int y = 0; y <3; y++) { 
+						cout << child->curr_state.at(x).at(y) << " ";
+						//cout << "(" << x << ", " << y << ")";
+					} 
+					cout << endl; 
+				}
+			}
+				
 		} 
 		
+		check = true; 
 		if(x > 0) { //up
 			int x = curr_blank_index.first - 1; 
 			int y = curr_blank_index.second;
 			pair<int, int> index(x, y); 
 			child = new Node(this, g_n + 1, operationAction(x, y), index, heuristic); 
 			
-			children.push_back(child);
+			for(unsigned int i = 0; i < f.size(); i++) { 
+				if(f.at(i)->curr_state == child->curr_state) { check = false; break; } 
+			} 
+			for(unsigned int j = 0; j < e.size(); j++) {	
+				if(e.at(j)->curr_state == child->curr_state) {check = false; break; } 
+			}
+			if(check) { 
+				cout << "f_n = " << child->f_n << endl; 
+				children.push_back(child); 
+				for(unsigned int x = 0; x < 3; x++) { 
+					for(unsigned int y = 0; y <3; y++) { 
+						cout << child->curr_state.at(x).at(y) << " ";
+						//cout << "(" << x << ", " << y << ")";
+					} 
+					cout << endl; 
+				}
+			}
 		}
 		
+		check = true; 
 		if(y < 2) { //right
 			int x = curr_blank_index.first; 
 			int y = curr_blank_index.second + 1;
 			pair<int, int> index(x, y); 
 			child = new Node(this, g_n + 1, operationAction(x, y), index, heuristic); 
 			
-			 
-			children.push_back(child);
+			for(unsigned int i = 0; i < f.size(); i++) { 
+				if(f.at(i)->curr_state == child->curr_state) { check = false; break; } 
+			} 
+			for(unsigned int j = 0; j < e.size(); j++) {	
+				if(e.at(j)->curr_state == child->curr_state) {check = false; break; } 
+			}
+			if(check) { 
+				children.push_back(child); 
+				cout << "f_n = " << child->f_n << endl; 
+				for(unsigned int x = 0; x < 3; x++) { 
+					for(unsigned int y = 0; y <3; y++) { 
+						cout << child->curr_state.at(x).at(y) << " ";
+						//cout << "(" << x << ", " << y << ")";
+					} 
+					cout << endl; 
+				}
+			}
 		}
-			
+		
+		check = true; 	
 		if(y > 0) { //left 
 			int x = curr_blank_index.first; 
 			int y = curr_blank_index.second - 1;
 			pair<int, int> index(x, y); 
 			child = new Node(this, g_n + 1, operationAction(x, y), index, heuristic); 
 			
-			children.push_back(child);
+			for(unsigned int i = 0; i < f.size(); i++) { 
+				if(f.at(i)->curr_state == child->curr_state) { check = false; break; } 
+			} 
+			for(unsigned int j = 0; j < e.size(); j++) {	
+				if(e.at(j)->curr_state == child->curr_state) {check = false; break; } 
+			}
+			if(check) { 
+				children.push_back(child); 
+				cout << "f_n = " << child->f_n << endl;
+				for(unsigned int x = 0; x < 3; x++) { 
+					for(unsigned int y = 0; y <3; y++) { 
+						cout << child->curr_state.at(x).at(y) << " ";
+					} 
+					cout << endl; 
+				}
+			}
 		}
 		
+		cout << "NUM CHILDREN: " << children.size() << endl; 
 		return children; 
 	} 
 	
@@ -148,32 +212,19 @@ class Node {
 		vector< vector<int> > new_state = this->curr_state; 
 		new_state.at(x).at(y) = 0; 
 		new_state.at(this->curr_blank_index.first).at(this->curr_blank_index.second) = tmp; 
-	
-	
-		
-		for(unsigned int x = 0; x < 3; x++) { 
-			for(unsigned int y = 0; y < 3; y++) { 
-				cout << new_state.at(x).at(y) << " ";
-			} 
-			cout << endl; 
-		} 
-		cout << endl; 
 		
 		return new_state;
 	}
 
 	
 	bool goalTest(const vector< vector<int> > goal) { 
-		for(unsigned int x = 0; x < 3; x++) { 
-			for(unsigned int y = 0; y < 3; y++) {
-				if(curr_state.at(x).at(y) != goal.at(x).at(y) ) { 
-					//Matrices not equal
-					return false; 
-				} 
-			}
-		}
-		
-		return true; 
+		return this->curr_state == goal; 
+	} 
+}; 
+
+struct Compare : public std::binary_function<Node*, Node*, bool> { 
+	bool operator() (const Node* a, const Node* b) const { 
+		return a->f_n > b->f_n; 
 	} 
 }; 
 
@@ -192,26 +243,20 @@ class Problem {
 
 }; 
 
-//Comparator for priority queue
-struct Compare { 
-	bool operator() (Node* a, Node* b) const { 
-		return a->f_n > b->f_n; 
-	} 
-}; 
-
 
 void GRAPH_SEARCH(Problem prob) { 
 	priority_queue<Node*, vector<Node*>, Compare> frontier;  
 	vector<Node*> explored;
+	vector<Node*> frontierCheck; 
 	
 	Node* init = new Node(NULL, 0, prob.initial_state, prob.blank_index, prob.heuristic); 
 	frontier.push(init); //frontier has only initial state
+	frontierCheck.push_back(init); 
 	
 	long maxFrontierSize = frontier.size(); 
 	long maxExploredSize = explored.size(); 
 	
-	while(1) {
-		if(frontier.empty()) { cout << "Failed to find solution" << endl; return; } 
+	while(!frontier.empty()) {
 		
 		Node* tmp = frontier.top();
 		frontier.pop(); 
@@ -219,46 +264,148 @@ void GRAPH_SEARCH(Problem prob) {
 		for(unsigned int x = 0; x < 3; x++) { 
 			for(unsigned int y = 0; y <3; y++) { 
 			cout << tmp->curr_state.at(x).at(y) << " ";
-			//cout << "(" << x << ", " << y << ")";
 			} 
 			cout << endl; 
 		}
-		cout << endl; 
+		cout << endl;
 		
+		if(tmp->g_n > 31) {cout << "PAST DEPTH 31" << endl; return;}
 		if(tmp->goalTest(prob.goal_state)) { 
 			cout << "FINISHED:" << endl; 
 			cout << "Max Frontier size: " << maxFrontierSize << endl;
 			cout << "Final Frontier size: " << frontier.size() << endl; 
 			cout << "Explored size: " << maxExploredSize << endl; 
-			cout << "Depth: " << tmp->f_n << endl; 
+			cout << "Depth: " << tmp->g_n << endl; 
 			return; 
 		} 
 		
-		vector<Node*> children = tmp->createChildren(); 
+		explored.push_back(tmp); 
+		
+		/*vector<Node*> children = tmp->createChildren(frontierCheck, explored); 
 		for(unsigned int i = 0; i < children.size(); i++) { 
-			frontier.push(children.at(i)); 
+			frontier.push(children.at(i));
+			frontierCheck.push_back(children.at(i)); 
+		}*/
+		
+		const int x = tmp->curr_blank_index.first; 
+		const int y = tmp->curr_blank_index.second; 
+		Node* child; 
+		vector< vector<int> > tmpState; 
+		bool check = true; 
+		
+		
+		if(x < 2) { //down
+			pair<int, int> index(x + 1, y);
+			tmpState = tmp->operationAction(x + 1, y); 
+
+			for(unsigned int i = 0; i < frontierCheck.size(); i++) { 
+				if(frontierCheck.at(i)->curr_state == tmpState) { check = false; break; } 
+			} 
+			for(unsigned int j = 0; j < explored.size(); j++) {	
+				if(explored.at(j)->curr_state == tmpState) {check = false; break; } 
+			}
+			if(check) { 
+				child = new Node(tmp, tmp->g_n + 1, tmpState, index, tmp->heuristic); 
+				cout << "f_n = " << child->f_n << endl; 
+				frontier.push(child);
+				frontierCheck.push_back(child); 
+				for(unsigned int x = 0; x < 3; x++) { 
+					for(unsigned int y = 0; y <3; y++) { 
+						cout << child->curr_state.at(x).at(y) << " ";
+					} 
+					cout << endl; 
+				}
+			}
+				
+		} 
+		
+		check = true; tmpState.clear(); 
+		if(x > 0) { //up
+			pair<int, int> index(x - 1, y); 
+			tmpState = tmp->operationAction(x - 1, y); 
+			
+			for(unsigned int i = 0; i < frontierCheck.size(); i++) { 
+				if(frontierCheck.at(i)->curr_state == tmpState) { check = false; break; } 
+			} 
+			for(unsigned int j = 0; j < explored.size(); j++) {	
+				if(explored.at(j)->curr_state == tmpState) {check = false; break; } 
+			}
+			if(check) { 
+				cout << "f_n = " << child->f_n << endl; 
+				child = new Node(tmp, tmp->g_n + 1, tmpState, index, tmp->heuristic); 
+			
+				frontier.push(child); 
+				frontierCheck.push_back(child); 
+				for(unsigned int x = 0; x < 3; x++) { 
+					for(unsigned int y = 0; y <3; y++) { 
+						cout << child->curr_state.at(x).at(y) << " ";
+					} 
+					cout << endl; 
+				}
+			}
+		}
+		
+		check = true; tmpState.clear(); 
+		if(y < 2) { //right
+			pair<int, int> index(x, y + 1); 
+			tmpState = tmp->operationAction(x, y + 1); 
+
+			for(unsigned int i = 0; i < frontierCheck.size(); i++) { 
+				if(frontierCheck.at(i)->curr_state == tmpState) { check = false; break; } 
+			} 
+			for(unsigned int j = 0; j < explored.size(); j++) {	
+				if(explored.at(j)->curr_state == tmpState) {check = false; break; } 
+			}
+			if(check) { 
+				child = new Node(tmp, tmp->g_n + 1, tmpState, index, tmp->heuristic); 
+
+				frontier.push(child); 
+				frontierCheck.push_back(child); 
+				cout << "f_n = " << child->f_n << endl; 
+				for(unsigned int x = 0; x < 3; x++) { 
+					for(unsigned int y = 0; y <3; y++) { 
+						cout << child->curr_state.at(x).at(y) << " ";
+					} 
+					cout << endl; 
+				}
+			}
+		}
+		
+		check = true; tmpState.clear(); 
+		if(y > 0) { //left 
+			pair<int, int> index(x, y - 1); 
+			tmpState = tmp->operationAction(x, y - 1); 
+			
+			for(unsigned int i = 0; i < frontierCheck.size(); i++) { 
+				if(frontierCheck.at(i)->curr_state == tmpState) { check = false; break; } 
+			} 
+			for(unsigned int j = 0; j < explored.size(); j++) {	
+				if(explored.at(j)->curr_state == tmpState) {check = false; break; } 
+			}
+			if(check) { 
+				child = new Node(tmp, tmp->g_n + 1, tmpState, index, tmp->heuristic); 
+				frontier.push(child); 
+				frontierCheck.push_back(child); 
+				cout << "f_n = " << child->f_n << endl;
+				for(unsigned int x = 0; x < 3; x++) { 
+					for(unsigned int y = 0; y <3; y++) { 
+						cout << child->curr_state.at(x).at(y) << " ";
+					} 
+					cout << endl; 
+				}
+			}
 		}
 		
 		
-		explored.push_back(tmp); 
 		maxFrontierSize = max(maxFrontierSize, (long)frontier.size()); 
 		maxExploredSize = max(maxExploredSize, (long)explored.size()); 
 	}
-	
-	/* 
-	function GRAPH-SEARCH(problem) returns a solution, or failure
-		initialize the frontier using initial state of problem
-		initialize the explored set to be empty
-		loop do 
-			if the frontier is empty then return failure
-			choose a leaf node and remove it from the frontier 
-			if the node contains a goal state then return the corresponding solution
-			add the node to the explored set 
-			expand the chosen node, adding the resulting nodes to the frontier 
-				only if not in the frontier or explored set 
-*/ 
 
+	cout << "Failed to find solution" << endl; 
+	return; 
 } 
+
+
 int main() { 
 
 	vector< vector<int> > initial_state; 
@@ -311,16 +458,6 @@ int main() {
 		} 
 		initial_state.push_back(tmp); 
 	} 
-	
-	for(unsigned int x = 0; x < 3; x++) { 
-		for(unsigned int y = 0; y <3; y++) { 
-			cout << initial_state.at(x).at(y) << " ";
-			//cout << "(" << x << ", " << y << ")";
-		} 
-		cout << endl; 
-	}
-	
-	cout << "Blank @: " << blank_index.first << ", " << blank_index.second << endl; 
 	
 	int alg_choice; 
 	cout << "Enter your choice of algorithm \n 1. Uniform Cost Search \n 2. A* with the Misplaced Tile heurisitc. \n 3. A* with the Manhattan distance heuristic." << endl; 
