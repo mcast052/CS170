@@ -17,7 +17,8 @@ CS170 WINTER17, Project 1:
 #include <sstream>
 #include <functional> 
 #include <algorithm> 
-#include <cmath> 
+#include <cmath>
+#include <unordered_map>
 
 using namespace std; 
 
@@ -64,7 +65,6 @@ class Node {
 					
 					
 					if(currNum != numToCheck) { 
-						cout << "Coordinate: " << x << ", " << y << endl; 
 						if(currNum == 1) { tmp = x + y; } 
 						else if(currNum == 2) { tmp = x + abs( (int)(1 - y) ); } 
 						else if(currNum == 3) { tmp = x + abs( (int)(2 - y) ); } 
@@ -74,8 +74,6 @@ class Node {
 						else if(currNum == 7) { tmp = abs( (int)(2 - x ) ) + y; }
 						else if(currNum == 8) { tmp = abs( (int)(2 - x) ) + abs( (int)(1 - y) ); }
 						else { tmp = 0; } 
-						cout << "currNum: " << currNum << endl; 
-						cout << "Distance: " << tmp << endl; 
 						h_n += tmp;
 					} 
 					numToCheck++; 
@@ -85,123 +83,6 @@ class Node {
 		}
 		f_n = g_n + h_n; 
 		return; 
-	} 
-	
-	vector<Node*> createChildren(vector<Node*> f, vector<Node*> e) { 
-		vector<Node*> children;
-		
-		//Check which operators are possible to do
-		int x = this->curr_blank_index.first; 
-		int y = this->curr_blank_index.second; 
-		Node* child; 
-		bool check = true; 
-		
-		
-		if(x < 2) { //down
-			int x = curr_blank_index.first + 1; 
-			int y = curr_blank_index.second;
-			pair<int, int> index(x, y); 
-			child = new Node(this, g_n + 1, operationAction(x, y), index, heuristic); 
-			
-			for(unsigned int i = 0; i < f.size(); i++) { 
-				if(f.at(i)->curr_state == child->curr_state) { check = false; break; } 
-			} 
-			for(unsigned int j = 0; j < e.size(); j++) {	
-				if(e.at(j)->curr_state == child->curr_state) {check = false; break; } 
-			}
-			if(check) { 
-				cout << "f_n = " << child->f_n << endl; 
-				children.push_back(child); 
-				for(unsigned int x = 0; x < 3; x++) { 
-					for(unsigned int y = 0; y <3; y++) { 
-						cout << child->curr_state.at(x).at(y) << " ";
-						//cout << "(" << x << ", " << y << ")";
-					} 
-					cout << endl; 
-				}
-			}
-				
-		} 
-		
-		check = true; 
-		if(x > 0) { //up
-			int x = curr_blank_index.first - 1; 
-			int y = curr_blank_index.second;
-			pair<int, int> index(x, y); 
-			child = new Node(this, g_n + 1, operationAction(x, y), index, heuristic); 
-			
-			for(unsigned int i = 0; i < f.size(); i++) { 
-				if(f.at(i)->curr_state == child->curr_state) { check = false; break; } 
-			} 
-			for(unsigned int j = 0; j < e.size(); j++) {	
-				if(e.at(j)->curr_state == child->curr_state) {check = false; break; } 
-			}
-			if(check) { 
-				cout << "f_n = " << child->f_n << endl; 
-				children.push_back(child); 
-				for(unsigned int x = 0; x < 3; x++) { 
-					for(unsigned int y = 0; y <3; y++) { 
-						cout << child->curr_state.at(x).at(y) << " ";
-						//cout << "(" << x << ", " << y << ")";
-					} 
-					cout << endl; 
-				}
-			}
-		}
-		
-		check = true; 
-		if(y < 2) { //right
-			int x = curr_blank_index.first; 
-			int y = curr_blank_index.second + 1;
-			pair<int, int> index(x, y); 
-			child = new Node(this, g_n + 1, operationAction(x, y), index, heuristic); 
-			
-			for(unsigned int i = 0; i < f.size(); i++) { 
-				if(f.at(i)->curr_state == child->curr_state) { check = false; break; } 
-			} 
-			for(unsigned int j = 0; j < e.size(); j++) {	
-				if(e.at(j)->curr_state == child->curr_state) {check = false; break; } 
-			}
-			if(check) { 
-				children.push_back(child); 
-				cout << "f_n = " << child->f_n << endl; 
-				for(unsigned int x = 0; x < 3; x++) { 
-					for(unsigned int y = 0; y <3; y++) { 
-						cout << child->curr_state.at(x).at(y) << " ";
-						//cout << "(" << x << ", " << y << ")";
-					} 
-					cout << endl; 
-				}
-			}
-		}
-		
-		check = true; 	
-		if(y > 0) { //left 
-			int x = curr_blank_index.first; 
-			int y = curr_blank_index.second - 1;
-			pair<int, int> index(x, y); 
-			child = new Node(this, g_n + 1, operationAction(x, y), index, heuristic); 
-			
-			for(unsigned int i = 0; i < f.size(); i++) { 
-				if(f.at(i)->curr_state == child->curr_state) { check = false; break; } 
-			} 
-			for(unsigned int j = 0; j < e.size(); j++) {	
-				if(e.at(j)->curr_state == child->curr_state) {check = false; break; } 
-			}
-			if(check) { 
-				children.push_back(child); 
-				cout << "f_n = " << child->f_n << endl;
-				for(unsigned int x = 0; x < 3; x++) { 
-					for(unsigned int y = 0; y <3; y++) { 
-						cout << child->curr_state.at(x).at(y) << " ";
-					} 
-					cout << endl; 
-				}
-			}
-		}
-		
-		cout << "NUM CHILDREN: " << children.size() << endl; 
-		return children; 
 	} 
 	
 	vector< vector<int> > operationAction(const int x, const int y) {
@@ -252,6 +133,7 @@ void GRAPH_SEARCH(Problem prob) {
 	Node* init = new Node(NULL, 0, prob.initial_state, prob.blank_index, prob.heuristic); 
 	frontier.push(init); //frontier has only initial state
 	frontierCheck.push_back(init); 
+	//cout << "INIT STATE: " << prob.initial_state.to_string() << endl; 
 	
 	long maxFrontierSize = frontier.size(); 
 	long maxExploredSize = explored.size(); 
@@ -260,7 +142,7 @@ void GRAPH_SEARCH(Problem prob) {
 		
 		Node* tmp = frontier.top();
 		frontier.pop(); 
-		cout << "The best state to expand is..." << endl; 
+		cout << "The best state to expand with a g(n) = " << tmp->g_n << " and h(n) = " << tmp->h_n << "..." << endl; 
 		for(unsigned int x = 0; x < 3; x++) { 
 			for(unsigned int y = 0; y <3; y++) { 
 			cout << tmp->curr_state.at(x).at(y) << " ";
@@ -271,11 +153,10 @@ void GRAPH_SEARCH(Problem prob) {
 		
 		if(tmp->g_n > 31) {cout << "PAST DEPTH 31" << endl; return;}
 		if(tmp->goalTest(prob.goal_state)) { 
-			cout << "FINISHED:" << endl; 
-			cout << "Max Frontier size: " << maxFrontierSize << endl;
-			cout << "Final Frontier size: " << frontier.size() << endl; 
-			cout << "Explored size: " << maxExploredSize << endl; 
-			cout << "Depth: " << tmp->g_n << endl; 
+			cout << "GOAL!!" << endl; 
+			cout << "To solve this problem the search algorithm expanded a total of " << explored.size() << " nodes." << endl; 
+			cout << "The maximum number of nodes in the queue at any one time was " << maxFrontierSize << endl; 
+			cout << "The depth of the goal node was " << tmp->g_n << endl; 
 			return; 
 		} 
 		
@@ -306,15 +187,15 @@ void GRAPH_SEARCH(Problem prob) {
 			}
 			if(check) { 
 				child = new Node(tmp, tmp->g_n + 1, tmpState, index, tmp->heuristic); 
-				cout << "f_n = " << child->f_n << endl; 
+				//cout << "f_n = " << child->f_n << endl; 
 				frontier.push(child);
 				frontierCheck.push_back(child); 
-				for(unsigned int x = 0; x < 3; x++) { 
+				/*for(unsigned int x = 0; x < 3; x++) { 
 					for(unsigned int y = 0; y <3; y++) { 
 						cout << child->curr_state.at(x).at(y) << " ";
 					} 
 					cout << endl; 
-				}
+				}*/
 			}
 				
 		} 
@@ -331,17 +212,17 @@ void GRAPH_SEARCH(Problem prob) {
 				if(explored.at(j)->curr_state == tmpState) {check = false; break; } 
 			}
 			if(check) { 
-				cout << "f_n = " << child->f_n << endl; 
+				//cout << "f_n = " << child->f_n << endl; 
 				child = new Node(tmp, tmp->g_n + 1, tmpState, index, tmp->heuristic); 
 			
 				frontier.push(child); 
 				frontierCheck.push_back(child); 
-				for(unsigned int x = 0; x < 3; x++) { 
+				/*for(unsigned int x = 0; x < 3; x++) { 
 					for(unsigned int y = 0; y <3; y++) { 
 						cout << child->curr_state.at(x).at(y) << " ";
 					} 
 					cout << endl; 
-				}
+				}*/
 			}
 		}
 		
@@ -361,13 +242,13 @@ void GRAPH_SEARCH(Problem prob) {
 
 				frontier.push(child); 
 				frontierCheck.push_back(child); 
-				cout << "f_n = " << child->f_n << endl; 
+				/*cout << "f_n = " << child->f_n << endl; 
 				for(unsigned int x = 0; x < 3; x++) { 
 					for(unsigned int y = 0; y <3; y++) { 
 						cout << child->curr_state.at(x).at(y) << " ";
 					} 
 					cout << endl; 
-				}
+				}*/
 			}
 		}
 		
@@ -386,13 +267,13 @@ void GRAPH_SEARCH(Problem prob) {
 				child = new Node(tmp, tmp->g_n + 1, tmpState, index, tmp->heuristic); 
 				frontier.push(child); 
 				frontierCheck.push_back(child); 
-				cout << "f_n = " << child->f_n << endl;
+				/*cout << "f_n = " << child->f_n << endl;
 				for(unsigned int x = 0; x < 3; x++) { 
 					for(unsigned int y = 0; y <3; y++) { 
 						cout << child->curr_state.at(x).at(y) << " ";
 					} 
 					cout << endl; 
-				}
+				}*/
 			}
 		}
 		
