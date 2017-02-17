@@ -19,6 +19,7 @@ CS170 WINTER17, Project 1:
 #include <algorithm> 
 #include <cmath>
 #include <unordered_map>
+#include <stack> 
 
 using namespace std; 
 
@@ -131,6 +132,27 @@ string keyGen(vector< vector<int> > v) {
 	return key; 
 } 
 
+void displayPath(Node* g) { 
+	cout << "The solution path is: " << endl; 
+	Node* curr = g; 
+	stack<Node*> path; 
+	while(curr != NULL) { 
+		path.push(curr); 
+		curr = curr->parent; 
+	} 
+	
+	while(path.size() > 0) { 
+		for(unsigned int x = 0; x < 3; x++) { 
+			for(unsigned int y = 0; y < 3; y++) { 
+				cout << path.top()->curr_state.at(x).at(y) << " "; 
+			} 
+			cout << endl; 
+		} 
+		cout << endl; 
+		path.pop(); 
+	} 
+} 
+
 void GRAPH_SEARCH(Problem prob) { 
 	priority_queue<Node*, vector<Node*>, Compare> frontier;  
 
@@ -161,7 +183,9 @@ void GRAPH_SEARCH(Problem prob) {
 			cout << "GOAL!!" << endl; 
 			cout << "To solve this problem the search algorithm expanded a total of " << explored.size() << " nodes." << endl; 
 			cout << "The maximum number of nodes in the queue at any one time was " << maxFrontierSize << endl; 
-			cout << "The depth of the goal node was " << tmp->g_n << endl; 
+			cout << "The depth of the goal node was " << tmp->g_n << endl << endl << endl; 
+			
+			displayPath(tmp); 
 			return; 
 		} 
 		
